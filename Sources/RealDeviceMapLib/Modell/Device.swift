@@ -21,7 +21,8 @@ public class Device: JSONConvertibleObject, Hashable {
             "last_seen": lastSeen as Any,
             "account_username": accountUsername as Any,
             "last_lat": lastLat as Any,
-            "last_lon": lastLon as Any
+            "last_lon": lastLon as Any,
+            "level":deviceLevel as Any
         ]
     }
 
@@ -36,9 +37,10 @@ public class Device: JSONConvertibleObject, Hashable {
     var accountUsername: String?
     var lastLat: Double?
     var lastLon: Double?
+    var deviceLevel: UInt8
 
     init(uuid: String, instanceName: String?, lastHost: String?, lastSeen: UInt32, accountUsername: String?,
-         lastLat: Double?, lastLon: Double?) {
+         lastLat: Double?, lastLon: Double?, deviceLevel: UInt8) {
         self.uuid = uuid
         self.instanceName = instanceName
         self.lastHost = lastHost
@@ -46,6 +48,7 @@ public class Device: JSONConvertibleObject, Hashable {
         self.accountUsername = accountUsername
         self.lastLat = lastLat
         self.lastLon = lastLon
+        self.deviceLevel = deviceLevel
     }
 
     public static func touch(mysql: MySQL?=nil, uuid: String, host: String) throws {
@@ -82,7 +85,7 @@ public class Device: JSONConvertibleObject, Hashable {
         let sql = """
                 UPDATE device
                 SET uuid = ?, instance_name = ?, last_host = ?, last_seen = ?, account_username = ?,
-                    last_lat = ?, last_lon = ?
+                    last_lat = ?, last_lon = ?, device_level = ?
                 WHERE uuid = ?
             """
         _ = mysqlStmt.prepare(statement: sql)
@@ -93,6 +96,7 @@ public class Device: JSONConvertibleObject, Hashable {
         mysqlStmt.bindParam(accountUsername)
         mysqlStmt.bindParam(lastLat)
         mysqlStmt.bindParam(lastLon)
+        mysqlStmt.bindParam(deviceLevel)
         mysqlStmt.bindParam(oldUUID)
 
         guard mysqlStmt.execute() else {
@@ -110,8 +114,8 @@ public class Device: JSONConvertibleObject, Hashable {
 
         let mysqlStmt = MySQLStmt(mysql)
         let sql = """
-            INSERT INTO device (uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO device (uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon, device_level)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         _ = mysqlStmt.prepare(statement: sql)
@@ -122,6 +126,7 @@ public class Device: JSONConvertibleObject, Hashable {
         mysqlStmt.bindParam(accountUsername)
         mysqlStmt.bindParam(lastLat)
         mysqlStmt.bindParam(lastLon)
+        mysqlStmt.bindParam(deviceLevel)
 
         guard mysqlStmt.execute() else {
             Log.error(message: "[DEVICE] Failed to execute query. (\(mysqlStmt.errorMessage())")
@@ -137,7 +142,7 @@ public class Device: JSONConvertibleObject, Hashable {
         }
 
         let sql = """
-            SELECT uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon
+            SELECT uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon, device_level
             FROM device
         """
 
@@ -159,9 +164,10 @@ public class Device: JSONConvertibleObject, Hashable {
             let accountUsername = result[4] as? String
             let lastLat = result[5] as? Double
             let lastLon = result[6] as? Double
+            let deviceLevel = result[7] as! UInt8
 
             devices.append(Device(uuid: uuid, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen,
-                                  accountUsername: accountUsername, lastLat: lastLat, lastLon: lastLon))
+                                  accountUsername: accountUsername, lastLat: lastLat, lastLon: lastLon, deviceLevel: deviceLevel))
         }
         return devices
 
@@ -175,10 +181,10 @@ public class Device: JSONConvertibleObject, Hashable {
         }
 
         let sql = """
-            SELECT uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon
+            SELECT uuid, instance_name, last_host, last_seen, account_username, last_lat, last_lon, device_level
             FROM device
             JOIN device_group_device dgd on uuid = dgd.device_uuid
-            WHERe dgd.device_group_name = ?
+            WHERE dgd.device_group_name = ?
         """
 
         let mysqlStmt = MySQLStmt(mysql)
@@ -200,9 +206,10 @@ public class Device: JSONConvertibleObject, Hashable {
             let accountUsername = result[4] as? String
             let lastLat = result[5] as? Double
             let lastLon = result[6] as? Double
+            let deviceLevel = result[7] as! UInt8
 
             devices.append(Device(uuid: uuid, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen,
-                                  accountUsername: accountUsername, lastLat: lastLat, lastLon: lastLon))
+                                  accountUsername: accountUsername, lastLat: lastLat, lastLon: lastLon, deviceLevel: deviceLevel))
         }
         return devices
 
@@ -216,7 +223,7 @@ public class Device: JSONConvertibleObject, Hashable {
         }
 
         let sql = """
-            SELECT instance_name, last_host, last_seen, account_username, last_lat, last_lon
+            SELECT instance_name, last_host, last_seen, account_username, last_lat, last_lon, device_level
             FROM device
             WHERE uuid = ?
             LIMIT 1
@@ -242,9 +249,10 @@ public class Device: JSONConvertibleObject, Hashable {
         let accountUsername = result[3] as? String
         let lastLat = result[4] as? Double
         let lastLon = result[5] as? Double
+        let deviceLevel = result[6] as! UInt8
 
         return Device(uuid: id, instanceName: instanceName, lastHost: lastHost, lastSeen: lastSeen,
-                      accountUsername: accountUsername, lastLat: lastLat, lastLon: lastLon)
+                      accountUsername: accountUsername, lastLat: lastLat, lastLon: lastLon, deviceLevel: deviceLevel)
     }
 
     public static func setLastLocation(mysql: MySQL?=nil, uuid: String, lat: Double, lon: Double, host: String) throws {

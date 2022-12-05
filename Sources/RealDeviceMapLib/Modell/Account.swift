@@ -864,7 +864,7 @@ public class Account: WebHookEvent {
 
         let sql = """
             SELECT
-              level,
+              a.level,
               COUNT(level) as total,
               SUM(
                   (failed IS NULL AND first_warning_timestamp is NULL) OR
@@ -886,8 +886,10 @@ public class Account: WebHookEvent {
                 last_encounter_time IS NOT NULL AND UNIX_TIMESTAMP() -
                 CAST(last_encounter_time AS SIGNED INTEGER) < 7200
               ) as cooldown,
-              SUM(spins >= 1000) as spin_limit
-            FROM account
+              SUM(spins >= 1000) as spin_limit,
+              (SELECT count(username) FROM device as d LEFT JOIN accounts_dashboard as ad 
+              ON ad.username = d.account_username WHERE a.level = ad.level) as in_use
+            FROM account as a
             GROUP BY level
             ORDER BY level DESC
         """
@@ -914,6 +916,7 @@ public class Account: WebHookEvent {
             let insuspended = Int64(result[8] as? String ?? "0") ?? 0
             let cooldown = Int64(result[9] as? String ?? "0") ?? 0
             let spinLimit = Int64(result[10] as? String ?? "0") ?? 0
+            let inUse = result[9] as! Int64
 
             stats.append([
                 "level": level,
@@ -926,7 +929,8 @@ public class Account: WebHookEvent {
                 "suspended": suspended.withCommas(),
                 "insuspended": insuspended.withCommas(),
                 "cooldown": cooldown.withCommas(),
-                "spin_limit": spinLimit.withCommas()
+                "spin_limit": spinLimit.withCommas(),
+                "in_use": inUse.withCommas()
             ])
 
         }

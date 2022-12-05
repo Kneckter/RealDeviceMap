@@ -1652,6 +1652,7 @@ public class ApiRequestHandler {
                     // deviceData["chk"] = ""
                     deviceData["uuid"] = device.uuid
                     deviceData["host"] = device.lastHost ?? ""
+                    deviceData["level"] = device.deviceLevel
                     deviceData["instance"] = device.instanceName ?? ""
                     deviceData["username"] = device.accountUsername ?? ""
 

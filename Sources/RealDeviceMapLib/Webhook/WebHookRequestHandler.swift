@@ -911,7 +911,7 @@ public class WebHookRequestHandler {
                 let assigned: Bool
                 if device == nil {
                     let newDevice = Device(uuid: uuid, instanceName: nil, lastHost: nil, lastSeen: 0,
-                                           accountUsername: nil, lastLat: 0.0, lastLon: 0.0)
+                                           accountUsername: nil, lastLat: 0.0, lastLon: 0.0, deviceLevel: 0)
                     try newDevice.create(mysql: mysql)
                     assigned = false
                 } else {
@@ -1052,10 +1052,12 @@ public class WebHookRequestHandler {
                 }
 
                 device.accountUsername = account!.username
+                device.deviceLevel = account!.level
                 try device.save(mysql: mysql, oldUUID: device.uuid)
                 try response.respondWithData(data: [
                     "username": account!.username,
-                    "password": account!.password
+                    "password": account!.password,
+                    "level": account!.level
                 ])
             } catch {
                 response.respondWithError(status: .internalServerError)
